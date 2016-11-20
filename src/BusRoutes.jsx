@@ -2,38 +2,41 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import loading from './loading.svg'
 
+const ENDPOINT_ROUTES = 'https://app.tussa.org/tussa/api/lineas';
+const ENDPOINT_ROUTE_ID = 'https://app.tussa.org/tussa/api/lineas/';
+
 function LoadingIcon(props) {
     return (
         <img id="loading" src={loading} alt="loading" />
     )
 }
 
-
 function BusStop(props) {
     const stop = props.stop;
+    const zona = stop.zona ? `(${stop.zona}) ` : "";
     return (
         <li>
-            {stop.codigo}- ({stop.zona}) {stop.nombre}
+            {stop.codigo} - {zona}{stop.nombre}
         </li>
     )
 }
 
-class RouteDirection extends Component {
-    render() {
-        const direction = this.props.direction;
-        const stops = direction.paradas.map(stop => {
-            return <BusStop key={stop.id} stop={stop} />
-        })
-        return (
-            <li key={direction.routeId + direction.nombre}
-                onClick={() => this.props.onClick()}>
+function RouteDirection(props) {
+    const direction = props.direction;
+    const stops = direction.paradas.map(stop => {
+        return <BusStop key={stop.id} stop={stop} />
+    })
+    return (
+        <div key={direction.routeId + direction.nombre}>
+            <h3 className="selectable"
+                onClick={() => props.onClick()}>
                 {direction.sentido}: {direction.nombre}
-                {this.props.display &&
-                    <ul>{stops}</ul>
-                }
-            </li>
-        )
-    }
+            </h3>
+            {props.display &&
+                <ul>{stops}</ul>
+            }
+        </div>
+    )
 }
 
 class Route extends Component {
@@ -42,20 +45,19 @@ class Route extends Component {
         this.state = {
             details: null,
             loading: false,
-            displayDetails: false,
-            displayDirection: null
+            displayDirectionId: null
+
         }
     }
     handleClickOnHeader() {
         this.setState({
-            displayDetails: !this.state.displayDetails,
             displayDirection: null
         });
-        if (!this.state.details) {
+        if (!this.state.loading && !this.state.details) {
             this.setState({
                 loading: true
             })
-            axios.get(`https://app.tussa.org/tussa/api/lineas/${this.props.route.id}`)
+            axios.get(ENDPOINT_ROUTE_ID + this.props.route.id)
                 .then(response => {
                     this.setState({
                         loading: false,
@@ -65,11 +67,14 @@ class Route extends Component {
                     console.log(error);
                 });
         }
+        this.props.onClick();
     }
     handleClickOnDirection(directionId) {
-
         this.setState({
-            displayDirection: directionId === this.state.displayDirection ? null : directionId
+            displayDirectionId:
+
+            directionId === this.state.displayDirectionId ? null : directionId
+
         })
     }
     render() {
@@ -77,11 +82,12 @@ class Route extends Component {
         const incidencias = route.incidencias ?
             ' (Con incidencias)' : null;
         var directions = null;
-        if (this.state.displayDetails && this.state.details) {
+        if (this.props.display && this.state.details) {
             directions = this.state.details.trayectos.map(direction => {
                 return <RouteDirection
                     onClick={() => this.handleClickOnDirection(direction.sentido)}
-                    display={this.state.displayDirection === direction.sentido}
+                    display={this.state.displayDirectionId === direction.sentido}
+
                     key={route.id + direction.sentido}
                     routeId={route.id}
                     direction={direction} />
@@ -90,15 +96,15 @@ class Route extends Component {
 
         return (
             <div>
-                <h2 style={{ color: route.estilo }}
+                <h2 className="selectable" style={{ color: route.estilo }}
                     onClick={() => this.handleClickOnHeader()}>
-                    {route.sinoptico}- {route.nombre}
+                    {route.sinoptico} - {route.nombre}
                     {incidencias}
                 </h2>
                 {this.state.loading &&
                     <LoadingIcon />
                 }
-                {this.state.displayDetails && this.state.details &&
+                {this.props.display && this.state.details &&
                     <ul>{directions}</ul>
                 }
 
@@ -111,11 +117,12 @@ class BusRoutes extends Component {
     constructor() {
         super();
         this.state = {
-            routes: []
+            routes: [],
+            selectedRouteId: null,
         }
     }
     componentDidMount() {
-        axios.get('https://app.tussa.org/tussa/api/lineas')
+        axios.get(ENDPOINT_ROUTES)
             .then(response => {
                 this.setState({
                     routes: response.data
@@ -124,9 +131,19 @@ class BusRoutes extends Component {
                 console.log(error);
             });
     }
+    handleClick(routeId) {
+        this.setState({
+            selectedRouteId: routeId === this.state.selectedRouteId ? null : routeId
+        })
+    }
     render() {
         const routes = this.state.routes.map(route => {
-            return <Route key={route.id} route={route} />
+            return <Route
+                key={route.id}
+                route={route}
+                display={route.id === this.state.selectedRouteId}
+                onClick={() => this.handleClick(route.id)}
+                />
         });
         return (
             <div>{routes}</div>

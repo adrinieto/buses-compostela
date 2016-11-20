@@ -4,8 +4,13 @@ body {
 }
 
 h2{
-    margin: 5px 0 0 10px 
+    margin: 5px 0 0 10px ;
 }
+
+.selectable {
+  cursor: pointer;
+}
+
 #loading{
     width: 30px;
     height: 30px;
