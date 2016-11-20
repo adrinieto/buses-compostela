@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
+import BusRoutes from './BusRoutes';
 import './index.css';
 
 ReactDOM.render(
-  <App />,
-  document.getElementById('root')
+  <BusRoutes />,
+  document.getElementById('bus-lines')
 );
