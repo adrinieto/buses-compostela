@@ -28,8 +28,7 @@ class IncidencesModal extends React.Component {
         const incidences = this.props.incidences.map(incidence => {
             return <div style={incidenceStyle}
                 key={incidence.id}
-                dangerouslySetInnerHTML={{ __html: incidence.descripcion }}>
-            </div>
+                dangerouslySetInnerHTML={{ __html: incidence.descripcion }}/>
         })
 
         return (

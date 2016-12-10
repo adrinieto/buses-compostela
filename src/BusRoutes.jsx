@@ -118,7 +118,7 @@ class Route extends Component {
         }
         return (
             <div>
-                <h2 className="selectable" style={{ color: route.estilo }}
+                <h2 className="clickable" style={{ color: route.estilo }}
                     onClick={() => this.handleClickOnHeader()}>
                     {route.sinoptico}- {route.nombre}
                 </h2>

@@ -1,20 +1,28 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import axios from 'axios';
-import { Map, Marker, Popup, TileLayer, CircleMarker } from 'react-leaflet';
-import Leaflet from 'leaflet';
+import { Map, Popup, TileLayer, CircleMarker } from 'react-leaflet';
 import { ENDPOINT_ROUTES, ENDPOINT_ROUTE_ID } from './constants';
-
-Leaflet.Icon.Default.imagePath = '//cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0/images/'
 
 export default class BusesMap extends Component {
   state = {
-    selectedRoute: null,
-    routes: {}
+    busRoutesSummary: {},
+    busRoutes: {},
+    selectedRoute: null
   }
-  constructor(){
+  constructor() {
     super();
     this.handleOnClick = this.handleOnClick.bind(this);
+  }
+  componentDidMount() {
+    axios.get(ENDPOINT_ROUTES)
+      .then(response => {
+        this.setState({
+          busRoutesSummary: response.data,
+          selectedRoute: response.data[0].id
+        })
+      }).catch(function (error) {
+        console.log(error);
+      });
   }
   handleOnClick(routeId) {
     console.log("handleOnClick: " + routeId);
@@ -22,12 +30,13 @@ export default class BusesMap extends Component {
       selectedRoute: routeId
     });
 
-    if (!this.state.routes[routeId]) {
+    if (!this.state.busRoutes[routeId]) {
       axios.get(ENDPOINT_ROUTE_ID + routeId)
         .then(response => {
-          this.state.routes[routeId] = response.data;
+          var busRoutes = this.state.busRoutes;
+          busRoutes[routeId] = response.data;
           this.setState({
-            routes: this.state.routes
+            busRoutes: this.state.busRoutes
           });
         }).catch(function (error) {
           console.log(error);
@@ -37,42 +46,34 @@ export default class BusesMap extends Component {
   render() {
     return (
       <div>
-        <RouteSelector onClick={this.handleOnClick} />
-        <BusRouteMap busRoute={this.state.routes[this.state.selectedRoute]} />
+        <RouteSelector
+          routes={this.state.busRoutesSummary}
+          selectedRoute={this.state.selectedRoute}
+          onClick={this.handleOnClick} />
+        <BusRouteMap
+          busRoute={this.state.busRoutes[this.state.selectedRoute]} />
       </div>
     );
   }
 }
 
-class RouteSelector extends Component {
-  state = {
-    routes: []
-  }
-  componentDidMount() {
-    axios.get(ENDPOINT_ROUTES)
-      .then(response => {
-        this.setState({
-          routes: response.data
-        })
-      }).catch(function (error) {
-        console.log(error);
-      });
-  }
-  render() {
-    const routes = this.state.routes.map(route => {
-      return <li
-        key={route.id}
-        onClick={() => this.props.onClick && this.props.onClick(route.id)}
-        className="selectable"
-        style={{ color: route.estilo }}
-        >{route.sinoptico}: {route.nombre}</li>
-    });
-    return (
-      <ul id="route-selector">
+function RouteSelector(props) {
+  const routes = props.routes && Object.values(props.routes).map(route => {
+    return <li
+      key={route.id}
+      onClick={() => props.onClick && props.onClick(route.id)}
+      className={props.selectedRoute === route.id && 'selected'}
+      style={{ color: route.estilo }}
+      >{route.sinoptico}: {route.nombre}</li>
+  });
+  return (
+    <div id="route-selector">
+      <p>Selecciona la línea a visualizar:</p>
+      <ul>
         {routes}
       </ul>
-    );
-  }
+    </div>
+  );
 }
 
 class BusRouteMap extends Component {
@@ -89,7 +90,7 @@ class BusRouteMap extends Component {
     if (this.props.busRoute) {
       stops = this.props.busRoute.trayectos.map(trayecto => {
         return trayecto.paradas.map(parada => {
-          return <StopMarker key={parada.id} busstop={parada} />
+          return <BusStopMarker key={parada.id} busstop={parada} />
         })
       });
     }
@@ -111,7 +112,7 @@ class BusRouteMap extends Component {
   }
 }
 
-function StopMarker(props) {
+function BusStopMarker(props) {
   const {busstop} = props;
   var color = busstop.extraordinaria ? '#db6f31' : '#2c8dc5';
   return (
@@ -125,4 +126,3 @@ function StopMarker(props) {
     </CircleMarker>
   )
 }
-

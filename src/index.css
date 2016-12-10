@@ -8,8 +8,12 @@ h2{
   display: inline;
 }
 
-.selectable {
+.clickable {
   cursor: pointer;
+}
+
+.selected {
+  text-decoration: underline;
 }
 
 #alert_icon{
@@ -31,6 +35,17 @@ h2{
 }
 
 #route-selector {
+  margin-left: 1em;
   margin-right: 1em;
   float: left;
+}
+#route-selector ul{
+  list-style-type: none;
+  padding: 0;
+} 
+
+#route-selector li{
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 0.2em;
 }
