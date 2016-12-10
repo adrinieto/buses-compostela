@@ -3,9 +3,7 @@ import axios from 'axios';
 import loading_icon from './loading.svg'
 import alert_icon from './alert.svg'
 import IncidencesModal from './IncidencesModal'
-
-const ENDPOINT_ROUTES = 'https://app.tussa.org/tussa/api/lineas';
-const ENDPOINT_ROUTE_ID = 'https://app.tussa.org/tussa/api/lineas/';
+import {ENDPOINT_ROUTES, ENDPOINT_ROUTE_ID} from './constants';
 
 
 function AlertIcon(props) {
