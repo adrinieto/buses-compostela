@@ -18,8 +18,8 @@ export default class BusesMap extends Component {
       .then(response => {
         this.setState({
           busRoutesSummary: response.data,
-          selectedRoute: response.data[0].id
         })
+        this.handleOnClick(response.data[0].id);
       }).catch(function (error) {
         console.log(error);
       });
