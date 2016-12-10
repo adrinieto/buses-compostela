@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import { Map, Popup, TileLayer, CircleMarker } from 'react-leaflet';
+import { Map, Popup, TileLayer, CircleMarker, FeatureGroup } from 'react-leaflet';
 import { ENDPOINT_ROUTES, ENDPOINT_ROUTE_ID } from './constants';
 
 export default class BusesMap extends Component {
@@ -25,7 +25,6 @@ export default class BusesMap extends Component {
       });
   }
   handleOnClick(routeId) {
-    console.log("handleOnClick: " + routeId);
     this.setState({
       selectedRoute: routeId
     });
@@ -81,9 +80,11 @@ class BusRouteMap extends Component {
     lat: 42.880556,
     lng: -8.544861,
     zoom: 13,
+    bounds: undefined
   }
 
   render() {
+    console.log("render");
     const position = [this.state.lat, this.state.lng]
 
     var stops = null;
@@ -97,18 +98,36 @@ class BusRouteMap extends Component {
 
     return (
       <div id="map-container">
-        <Map center={position} zoom={this.state.zoom}>
+        <Map
+          center={position}
+          zoom={this.state.zoom}
+          bounds={this.state.bounds}>
           <TileLayer
             url='http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
             attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
             subdomains='abcd'
             maxZoom={19}
             />
-
-          {stops}
+          <FeatureGroup
+            ref='featureGroup'>
+            {stops}
+          </FeatureGroup>
         </Map>
       </div>
     )
+  }
+  componentDidUpdate() {
+    //Zoom to the route
+    if (this.refs.featureGroup) {
+      var oldBounds = this.state.bounds;
+      var newBounds = this.refs.featureGroup.leafletElement.getBounds();
+      if (newBounds.isValid() && (oldBounds === undefined ||
+        newBounds.toBBoxString() !== oldBounds.toBBoxString())) {
+        this.setState({
+          bounds: newBounds
+        })
+      }
+    }
   }
 }
 
