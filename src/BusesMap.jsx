@@ -8,22 +8,37 @@ import { ENDPOINT_ROUTES, ENDPOINT_ROUTE_ID } from './constants';
 Leaflet.Icon.Default.imagePath = '//cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0/images/'
 
 export default class BusesMap extends Component {
-  state = {}
-  componentDidMount() {
-    axios.get(ENDPOINT_ROUTE_ID + "1")
-      .then(response => {
-        this.setState({
-          busroute: response.data
-        })
-      }).catch(function (error) {
-        console.log(error);
-      });
+  state = {
+    selectedRoute: null,
+    routes: {}
+  }
+  constructor(){
+    super();
+    this.handleOnClick = this.handleOnClick.bind(this);
+  }
+  handleOnClick(routeId) {
+    console.log("handleOnClick: " + routeId);
+    this.setState({
+      selectedRoute: routeId
+    });
+
+    if (!this.state.routes[routeId]) {
+      axios.get(ENDPOINT_ROUTE_ID + routeId)
+        .then(response => {
+          this.state.routes[routeId] = response.data;
+          this.setState({
+            routes: this.state.routes
+          });
+        }).catch(function (error) {
+          console.log(error);
+        });
+    }
   }
   render() {
     return (
       <div>
-        <RouteSelector />
-        <BusRouteMap busroute={this.state.busroute} />
+        <RouteSelector onClick={this.handleOnClick} />
+        <BusRouteMap busRoute={this.state.routes[this.state.selectedRoute]} />
       </div>
     );
   }
@@ -45,10 +60,15 @@ class RouteSelector extends Component {
   }
   render() {
     const routes = this.state.routes.map(route => {
-      return <li key={route.id}>{route.nombre}</li>
+      return <li
+        key={route.id}
+        onClick={() => this.props.onClick && this.props.onClick(route.id)}
+        className="selectable"
+        style={{ color: route.estilo }}
+        >{route.sinoptico}: {route.nombre}</li>
     });
     return (
-      <ul>
+      <ul id="route-selector">
         {routes}
       </ul>
     );
@@ -66,23 +86,27 @@ class BusRouteMap extends Component {
     const position = [this.state.lat, this.state.lng]
 
     var stops = null;
-    if (this.props.busroute) {
-      stops = this.props.busroute.trayectos[0].paradas.map(parada => {
-        return <StopMarker key={parada.id} busstop={parada} />
+    if (this.props.busRoute) {
+      stops = this.props.busRoute.trayectos.map(trayecto => {
+        return trayecto.paradas.map(parada => {
+          return <StopMarker key={parada.id} busstop={parada} />
+        })
       });
     }
 
     return (
-      <Map center={position} zoom={this.state.zoom}>
-        <TileLayer
-          url='http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
-          attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
-          subdomains='abcd'
-          maxZoom={19}
-          />
+      <div id="map-container">
+        <Map center={position} zoom={this.state.zoom}>
+          <TileLayer
+            url='http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
+            attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+            subdomains='abcd'
+            maxZoom={19}
+            />
 
-        {stops}
-      </Map>
+          {stops}
+        </Map>
+      </div>
     )
   }
 }

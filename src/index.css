@@ -26,5 +26,11 @@ h2{
 }
 
 .leaflet-container {
-  height: 400px;
+  height: 800px;
+  margin-right: 1em;
+}
+
+#route-selector {
+  margin-right: 1em;
+  float: left;
 }
